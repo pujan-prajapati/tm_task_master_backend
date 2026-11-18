@@ -21,6 +21,8 @@ class Settings(BaseSettings):
     USE_CREDENTIALS: bool
     VALIDATE_CERTS: bool
 
+    AUTH_SERVICE_URL: str
+
     REDIS_URL: str
 
 
