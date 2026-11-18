@@ -1,7 +1,7 @@
 import json
 import redis
 
-from src.core.settings import settings
+from src.modules.core.settings import settings
 
 # =========== REDIS CLIENT ==================
 redis_client = redis.Redis.from_url(settings.REDIS_URL, decode_responses=True)

@@ -1,7 +1,7 @@
 import redis
 from rq import Queue, Retry
 
-from src.core.settings import settings
+from src.modules.core.settings import settings
 
 redis_connection = redis.Redis.from_url(settings.REDIS_URL, decode_responses=False)
 

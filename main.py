@@ -1,17 +1,17 @@
 from fastapi import FastAPI
 from fastapi.exceptions import HTTPException
-from src.utils.exceptions import http_exception_handler
 
-from src.core.db import Base, engine
+from src.modules.core.db import Base, engine
+from src.modules.tasks.routers import task_routes
+from src.modules.users.routers import user_routes
+from src.modules.tags.routers import tag_routes
+from src.modules.categories.routers import category_routes
+from src.modules.comments.routers import comment_routes
+from src.modules.notifications.routers import notification_routes
+from src.modules.auth_service.routers import router as auth_router
 
-from src.tasks.routers import task_routes
-from src.users.routers import user_routes
-from src.tags.routers import tag_routes
-from src.categories.routers import category_routes
-from src.comments.routers import comment_routes
-from src.notifications.routers import notification_routes
 from src.websocket.routers import websocket_routes
-from src.auth_service.routers import router as auth_router
+from src.utils.exceptions import http_exception_handler
 
 Base.metadata.create_all(engine)
 

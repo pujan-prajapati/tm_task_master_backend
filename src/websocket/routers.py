@@ -1,6 +1,6 @@
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
-from src.core.db import LocalSession
+from src.modules.core.db import LocalSession
 from src.dependencies.websocket_is_authenticated import websocket_is_authenticated
 from src.websocket.manager import manager
 

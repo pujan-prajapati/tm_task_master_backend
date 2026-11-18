@@ -1,7 +1,7 @@
 from fastapi import HTTPException, status, Depends
 
-from src.users.dtos import UserRole
-from src.users.models import UserModel
+from src.modules.users.dtos import UserRole
+from src.modules.users.models import UserModel
 from src.dependencies.is_authenticated import is_authenticated
 
 
