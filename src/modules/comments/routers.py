@@ -1,9 +1,9 @@
-from fastapi import APIRouter, Depends, status, BackgroundTasks
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from src.modules.comments import controllers
 from src.modules.comments.dtos import CommentResponseSchema, CommentSchema
-from src.modules.users.models import UserModel
+
 from src.dependencies.is_authenticated import is_authenticated
 from src.modules.core.db import get_db
 from src.utils.dtos import ResponseSchema
@@ -21,9 +21,9 @@ async def create_comment(
     task_id: int,
     body: CommentSchema,
     db: Session = Depends(get_db),
-    user: UserModel = Depends(is_authenticated),
+    user_id: int = Depends(is_authenticated),
 ):
-    return await controllers.create_comment(body, task_id, db, user)
+    return await controllers.create_comment(body, task_id, db, user_id)
 
 
 # ================ GET ALL COMMENTS =====================
@@ -35,9 +35,9 @@ async def create_comment(
 def get_task_comments(
     task_id: int,
     db: Session = Depends(get_db),
-    user: UserModel = Depends(is_authenticated),
+    user_id: int = Depends(is_authenticated),
 ):
-    return controllers.get_task_comments(task_id, db, user)
+    return controllers.get_task_comments(task_id, db, user_id)
 
 
 # ============== UPDATE COMMENT =========================
@@ -51,14 +51,14 @@ def update_comment(
     comment_id: int,
     body: CommentSchema,
     db: Session = Depends(get_db),
-    user: UserModel = Depends(is_authenticated),
+    user_id: int = Depends(is_authenticated),
 ):
     return controllers.update_comment(
         task_id,
         comment_id,
         body,
         db,
-        user,
+        user_id,
     )
 
 
@@ -72,11 +72,11 @@ def delete_comment(
     task_id: int,
     comment_id: int,
     db: Session = Depends(get_db),
-    user: UserModel = Depends(is_authenticated),
+    user_id: int = Depends(is_authenticated),
 ):
     return controllers.delete_comment(
         task_id,
         comment_id,
         db,
-        user,
+        user_id,
     )

@@ -5,7 +5,6 @@ from src.modules.core.db import get_db
 from src.modules.notifications import controllers
 from src.modules.notifications.dtos import NotificationResponseSchema
 from src.dependencies.is_authenticated import is_authenticated
-from src.modules.users.models import UserModel
 from src.utils.dtos import ResponseSchema
 
 notification_routes = APIRouter(prefix="/notifications", tags=["Notifications"])
@@ -18,9 +17,9 @@ notification_routes = APIRouter(prefix="/notifications", tags=["Notifications"])
     status_code=status.HTTP_200_OK,
 )
 def get_my_notifications(
-    db: Session = Depends(get_db), user: UserModel = Depends(is_authenticated)
+    db: Session = Depends(get_db), user_id: int = Depends(is_authenticated)
 ):
-    return controllers.get_my_notification(db, user)
+    return controllers.get_my_notification(db, user_id)
 
 
 # ================= MARK NOTIFICATION AS READ =============================
@@ -32,6 +31,6 @@ def get_my_notifications(
 def mark_notification_as_read(
     notification_id: int,
     db: Session = Depends(get_db),
-    user: UserModel = Depends(is_authenticated),
+    user_id: int = Depends(is_authenticated),
 ):
-    return controllers.mark_notification_as_read(notification_id, db, user)
+    return controllers.mark_notification_as_read(notification_id, db, user_id)

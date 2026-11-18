@@ -1,7 +1,7 @@
-from task_management_app.src.modules.core.db import LocalSession
-from task_management_app.src.modules.users.models import UserModel
-from task_management_app.src.modules.users.controllers import get_password_hash
-from task_management_app.src.modules.tasks.models import TaskModel
+from src.modules.core.db import LocalSession
+from src.modules.users.models import UserModel
+from src.modules.users.controllers import get_password_hash
+from src.modules.tasks.models import TaskModel
 
 
 def seed_database():

@@ -13,6 +13,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    networks:
+      - app-network
 
   email-worker:
     build: .
@@ -24,6 +26,8 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+    networks:
+      - app-network
 
   db:
     image: postgres:16-alpine
@@ -33,6 +37,8 @@ services:
       POSTGRES_DB: task_management_app
     volumes:
       - pgdata:/var/lib/postgresql/data
+    networks:
+      - app-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d task_management_app"]
       interval: 5s
@@ -41,6 +47,8 @@ services:
 
   redis:
     image: redis:7-alpine
+    networks:
+      - app-network
     volumes:
       - redisdata:/data
     healthcheck:
@@ -52,3 +60,8 @@ services:
 volumes:
   pgdata:
   redisdata:
+
+networks:
+  app-network:
+    external: true
+    name: be-intern-capstone-network

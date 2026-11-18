@@ -1,36 +1,39 @@
-from fastapi import WebSocket
-from src.modules.users.models import UserModel
-from src.modules.core.settings import settings
-from sqlalchemy.orm import Session
-from jwt.exceptions import InvalidTokenError
-from jwt.exceptions import InvalidTokenError
-import jwt
+from fastapi import WebSocket, WebSocketException, status
+import httpx
+
+from src.modules.auth_service import auth_client
 
 
 # ===================== WEBSOCKET IS AUTHENTICATED =======================================
-def websocket_is_authenticated(websocket: WebSocket, db: Session):
+async def websocket_is_authenticated(websocket: WebSocket):
+    token = websocket.query_params.get("token")
+
+    if not token:
+        raise WebSocketException(
+            code=status.WS_1008_POLICY_VIOLATION,
+            reason="Authentication token is missing",
+        )
+
     try:
-        token = websocket.query_params.get("token")
+        user_response = await auth_client.get_user_profile(token)
+        user = user_response["data"]
 
-        if not token:
-            raise InvalidTokenError
+        return user["id"]
 
-        data = jwt.decode(token, settings.SECRET_KEY, settings.ALGORITHM)
+    except httpx.HTTPStatusError as error:
+        if error.response.status_code in (401, 403):
+            raise WebSocketException(
+                code=status.WS_1008_POLICY_VIOLATION,
+                reason="Invalid or expired authentication token",
+            )
 
-        user_id = data.get("_id")
+        raise WebSocketException(
+            code=status.WS_1011_INTERNAL_ERROR,
+            reason="Authentication service error",
+        )
 
-        if not user_id:
-            raise InvalidTokenError
-
-        user = db.query(UserModel).filter(UserModel.id == user_id).first()
-
-        if not user:
-            raise InvalidTokenError
-
-        if not user.is_active:
-            raise InvalidTokenError
-
-        return user
-
-    except InvalidTokenError:
-        raise None
+    except httpx.RequestError:
+        raise WebSocketException(
+            code=status.WS_1011_INTERNAL_ERROR,
+            reason="Authentication service unavailable",
+        )

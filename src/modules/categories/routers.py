@@ -3,8 +3,6 @@ from sqlalchemy.orm import Session
 
 from src.modules.core.db import get_db
 
-from src.modules.users.models import UserModel
-
 from src.modules.categories.dtos import CategorySchema, CategoryResponseSchema
 from src.modules.categories import controllers
 
@@ -23,9 +21,9 @@ category_routes = APIRouter(prefix="/categories", tags=["Categories"])
 def create_category(
     body: CategorySchema,
     db: Session = Depends(get_db),
-    user: UserModel = Depends(is_authenticated),
+    user_id: int = Depends(is_authenticated),
 ):
-    return controllers.create_category(body, db, user)
+    return controllers.create_category(body, db, user_id)
 
 
 # ================== GET CATEGORY ===========================
@@ -35,9 +33,9 @@ def create_category(
     status_code=status.HTTP_200_OK,
 )
 def get_all_categories(
-    db: Session = Depends(get_db), user: UserModel = Depends(is_authenticated)
+    db: Session = Depends(get_db), user_id: int = Depends(is_authenticated)
 ):
-    return controllers.get_all_categories(db, user)
+    return controllers.get_all_categories(db, user_id)
 
 
 # ================== GET ONE CATEGORY ===========================
@@ -49,9 +47,9 @@ def get_all_categories(
 def get_one_category(
     category_id: int,
     db: Session = Depends(get_db),
-    user: UserModel = Depends(is_authenticated),
+    user_id: int = Depends(is_authenticated),
 ):
-    return controllers.get_one_category(category_id, db, user)
+    return controllers.get_one_category(category_id, db, user_id)
 
 
 # ================== UPDATE CATEGORY ===========================
@@ -64,9 +62,9 @@ def update_category(
     body: CategorySchema,
     category_id: int,
     db: Session = Depends(get_db),
-    user: UserModel = Depends(is_authenticated),
+    user_id: int = Depends(is_authenticated),
 ):
-    return controllers.update_category(body, category_id, db, user)
+    return controllers.update_category(body, category_id, db, user_id)
 
 
 # ================== DELETE CATEGORY ===========================
@@ -78,6 +76,6 @@ def update_category(
 def delete_category(
     category_id: int,
     db: Session = Depends(get_db),
-    user: UserModel = Depends(is_authenticated),
+    user_id: int = Depends(is_authenticated),
 ):
-    return controllers.delete_category(category_id, db, user)
+    return controllers.delete_category(category_id, db, user_id)

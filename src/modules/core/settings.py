@@ -23,6 +23,8 @@ class Settings(BaseSettings):
 
     AUTH_SERVICE_URL: str
 
+    FASTAPI_SERVICE_SECRET: str
+
     REDIS_URL: str
 
 

@@ -4,8 +4,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from main import app
-from task_management_app.src.modules.core.db import Base, get_db
-from task_management_app.src.modules.core.settings import settings
+from src.modules.core.db import Base, get_db
+from src.modules.core.settings import settings
 
 test_engine = create_engine(settings.TEST_DB_CONNECTION)
 TestSession = sessionmaker(bind=test_engine)

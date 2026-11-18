@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import String, ForeignKey, DateTime, func
+from sqlalchemy import String, Integer, DateTime, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.modules.core.db import Base
@@ -12,9 +12,7 @@ class NotificationModel(Base):
 
     message: Mapped[str] = mapped_column(String(255), nullable=False)
 
-    user_id: Mapped[int] = mapped_column(
-        ForeignKey("user_table.id", ondelete="CASCADE"), nullable=False
-    )
+    user_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
 
     is_read: Mapped[bool] = mapped_column(default=False, nullable=False)
 

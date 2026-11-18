@@ -1,16 +1,17 @@
-from fastapi import HTTPException, status, BackgroundTasks
+from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 
 from src.modules.comments.dtos import CommentSchema
 from src.modules.comments.models import CommentModel
-from src.modules.users.models import UserModel
 from src.modules.tasks.models import TaskModel
+
+from src.associations_table.associations import task_assignment
+from src.modules.auth_service import auth_client
 
 from src.modules.notifications.controllers import create_notification
 from src.utils.helpers import success_response
 from src.modules.tasks.helpers import check_task_access
-from src.utils.mail import send_email
 
 from src.websocket.manager import manager
 
@@ -23,43 +24,62 @@ async def create_comment(
     body: CommentSchema,
     task_id: int,
     db: Session,
-    user: UserModel,
+    user_id: int,
 ):
     task = db.get(TaskModel, task_id)
 
     if not task:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Task not found"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Task not found",
         )
 
-    check_task_access(task, user)
+    check_task_access(task, user_id, db)
 
-    new_comment = CommentModel(content=body.content, task_id=task_id, user_id=user.id)
+    new_comment = CommentModel(
+        content=body.content,
+        task_id=task_id,
+        user_id=user_id,
+    )
 
     db.add(new_comment)
 
-    # Collect everyone who should receive the notification
+    # Collect notification recipients
     recipients = set()
 
-    # Add Task owner
-    if task.user_id != user.id:
+    # Add task owner
+    if task.user_id != user_id:
         recipients.add(task.user_id)
 
-    # Add Assigned users
-    for assigned_user in task.assigned_users:
-        if assigned_user.id != user.id:
-            recipients.add(assigned_user.id)
+    # Get assigned user IDs from the association table
+    assigned_user_ids = db.scalars(
+        select(task_assignment.c.user_id).where(task_assignment.c.task_id == task.id)
+    ).all()
 
-    # create database notifications + email notifications
-    for recipent_id in recipients:
-        recipient = db.get(UserModel, recipent_id)
+    for assigned_user_id in assigned_user_ids:
+        if assigned_user_id != user_id:
+            recipients.add(assigned_user_id)
+
+    # Fetch recipient details from Node.js Auth service
+    recipient_profiles = []
+
+    for recipient_id in recipients:
+        user_response = await auth_client.get_user_by_id(recipient_id)
+        recipient_profiles.append(user_response["data"])
 
         create_notification(
-            message=f"New comment on task: {task.title}", user_id=recipent_id, db=db
+            message=f"New comment on task: {task.title}",
+            user_id=recipient_id,
+            db=db,
         )
 
+    db.commit()
+    db.refresh(new_comment)
+
+    # Send external notifications after the database commit
+    for recipient in recipient_profiles:
         await manager.send_to_user(
-            user_id=recipent_id,
+            user_id=recipient["id"],
             message={
                 "type": "comment_added",
                 "message": f"New comment on task: {task.title}",
@@ -67,43 +87,29 @@ async def create_comment(
             },
         )
 
-        # Email notification
         email_queue.enqueue(
             send_email_job,
-            emails=[recipient.email],
+            emails=[recipient["email"]],
             subject="New Comment On Your Task",
             html=f"""
-                    <h2>New Comment</h2>
-                    <p>Hi {recipient.name},</p>
-                    <p><strong>{task.title}</strong></p>
-                    <p><strong>Comment:</strong></p>
-                    <p>{new_comment.content}</p>
-                    <p>Please login to TaskMaster to view the task.</p>
-                """,
+                <h2>New Comment</h2>
+                <p>Hi {recipient["name"]},</p>
+                <p><strong>{task.title}</strong></p>
+                <p><strong>Comment:</strong></p>
+                <p>{new_comment.content}</p>
+                <p>Please login to TaskMaster to view the task.</p>
+            """,
             retry=email_retry,
         )
-        # backgroud_tasks.add_task(
-        #     send_email,
-        #     emails=[recipient.email],
-        #     subject="New Comment On Your Task",
-        #     html=f"""
-        #         <h2>New Comment</h2>
-        #         <p>Hi {recipient.name},</p>
-        #         <p><strong>{task.title}</strong></p>
-        #         <p><strong>Comment:</strong></p>
-        #         <p>{new_comment.content}</p>
-        #         <p>Please login to TaskMaster to view the task.</p>
-        #     """,
-        # )
 
-    db.commit()
-    db.refresh(new_comment)
-
-    return success_response(data=new_comment, message="Comment Created Successfully")
+    return success_response(
+        data=new_comment,
+        message="Comment Created Successfully",
+    )
 
 
 # ================ GET TASK COMMENTS ============================
-def get_task_comments(task_id: int, db: Session, user: UserModel):
+def get_task_comments(task_id: int, db: Session, user_id: int):
     task = db.get(TaskModel, task_id)
 
     if not task:
@@ -111,7 +117,7 @@ def get_task_comments(task_id: int, db: Session, user: UserModel):
             status_code=status.HTTP_404_NOT_FOUND, detail="Task Not Found"
         )
 
-    check_task_access(task, user)
+    check_task_access(task, user_id, db)
 
     query = (
         select(CommentModel)
@@ -125,7 +131,7 @@ def get_task_comments(task_id: int, db: Session, user: UserModel):
 
 # ================ UPDATE COMMENTS ============================
 def update_comment(
-    task_id: int, comment_id: int, body: CommentSchema, db: Session, user: UserModel
+    task_id: int, comment_id: int, body: CommentSchema, db: Session, user_id: int
 ):
     task = db.get(TaskModel, task_id)
 
@@ -134,7 +140,7 @@ def update_comment(
             status_code=status.HTTP_404_NOT_FOUND, detail="Tas Not Found"
         )
 
-    check_task_access(task, user)
+    check_task_access(task, user_id, db)
 
     comment = db.get(CommentModel, comment_id)
 
@@ -149,7 +155,7 @@ def update_comment(
             detail="Comment Does Not Belog To This Task",
         )
 
-    if comment.user_id != user.id:
+    if comment.user_id != user_id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="You Can Only Update Your Own Comment",
@@ -164,7 +170,7 @@ def update_comment(
 
 
 # ================ DELETE COMMENTS ============================
-def delete_comment(task_id: int, comment_id: int, db: Session, user: UserModel):
+def delete_comment(task_id: int, comment_id: int, db: Session, user_id: int):
     task = db.get(TaskModel, task_id)
 
     if not task:
@@ -172,7 +178,7 @@ def delete_comment(task_id: int, comment_id: int, db: Session, user: UserModel):
             status_code=status.HTTP_404_NOT_FOUND, detail="Tas Not Found"
         )
 
-    check_task_access(task, user)
+    check_task_access(task, user_id, db)
 
     comment = db.get(CommentModel, comment_id)
 
@@ -187,9 +193,9 @@ def delete_comment(task_id: int, comment_id: int, db: Session, user: UserModel):
             detail="Comment Does Not Belog To This Task",
         )
 
-    if comment.user_id != user.id:
+    if comment.user_id != user_id:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
+            status_code=status.HTTP_403_FORBIDDEN,
             detail="You Can Only Delete Your Own Comment",
         )
 

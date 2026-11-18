@@ -2,13 +2,13 @@ from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
-from task_management_app.src.modules.core.settings import settings
-from task_management_app.src.modules.users.models import UserModel
-from task_management_app.src.modules.tasks.models import TaskModel
-from task_management_app.src.modules.categories.models import CategoryModel
-from task_management_app.src.modules.comments.models import CommentModel
-from task_management_app.src.modules.notifications.models import NotificationModel
-from task_management_app.src.modules.core.db import Base
+from src.modules.core.settings import settings
+from src.modules.tasks.models import TaskModel
+from src.modules.categories.models import CategoryModel
+from src.modules.comments.models import CommentModel
+from src.modules.notifications.models import NotificationModel
+from src.modules.tags.models import TagModel
+from src.modules.core.db import Base
 
 from alembic import context
 

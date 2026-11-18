@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status, Query, BackgroundTasks
+from fastapi import APIRouter, Depends, status, Query
 from sqlalchemy.orm import Session
 
 from src.modules.tasks import controllers
@@ -11,9 +11,7 @@ from src.modules.tasks.dtos import (
     TaskListResponseSchema,
     AssignTaskSchema,
 )
-from src.modules.users.dtos import UserResponseSchema
 
-from src.modules.users.models import UserModel
 from src.modules.core.db import get_db
 from src.dependencies.is_authenticated import is_authenticated
 from src.utils.dtos import ResponseSchema
@@ -30,9 +28,9 @@ task_routes = APIRouter(prefix="/tasks", tags=["Tasks"])
 def create_task(
     body: TaskSchema,
     db: Session = Depends(get_db),
-    user: UserModel = Depends(is_authenticated),
+    user_id: int = Depends(is_authenticated),
 ):
-    return controllers.create_task(body, db, user)
+    return controllers.create_task(body, db, user_id)
 
 
 # =================== get all tasks ==================
@@ -43,7 +41,7 @@ def create_task(
 )
 def get_all_tasks(
     db: Session = Depends(get_db),
-    user: UserModel = Depends(is_authenticated),
+    user_id: int = Depends(is_authenticated),
     search: str | None = None,
     sort_by: str = Query("id"),
     order: str = Query("asc"),
@@ -56,7 +54,7 @@ def get_all_tasks(
 ):
     return controllers.get_all_tasks(
         db,
-        user,
+        user_id,
         search,
         sort_by,
         order,
@@ -78,9 +76,9 @@ def get_all_tasks(
 def get_one_task(
     task_id: int,
     db: Session = Depends(get_db),
-    user: UserModel = Depends(is_authenticated),
+    user_id: int = Depends(is_authenticated),
 ):
-    return controllers.get_one_task(task_id, db, user)
+    return controllers.get_one_task(task_id, db, user_id)
 
 
 # ================= update task ==========================
@@ -93,9 +91,9 @@ def update_task(
     body: TaskSchema,
     task_id: int,
     db: Session = Depends(get_db),
-    user: UserModel = Depends(is_authenticated),
+    user_id: int = Depends(is_authenticated),
 ):
-    return controllers.update_task(body, task_id, db, user)
+    return controllers.update_task(body, task_id, db, user_id)
 
 
 # ================= delete task ===========================
@@ -107,9 +105,9 @@ def update_task(
 def delete_task(
     task_id: int,
     db: Session = Depends(get_db),
-    user: UserModel = Depends(is_authenticated),
+    user_id: int = Depends(is_authenticated),
 ):
-    return controllers.delete_task(task_id, db, user)
+    return controllers.delete_task(task_id, db, user_id)
 
 
 # ================ ADD TAGS TO TASK ======================
@@ -122,9 +120,9 @@ def add_tags_to_task(
     task_id: int,
     body: AddTagSchema,
     db: Session = Depends(get_db),
-    user: UserModel = Depends(is_authenticated),
+    user_id: int = Depends(is_authenticated),
 ):
-    return controllers.add_tags_to_task(task_id, body, db, user)
+    return controllers.add_tags_to_task(task_id, body, db, user_id)
 
 
 # ================= DELETE TAG FROM TASK ==========================
@@ -137,9 +135,9 @@ def delete_tag_from_task(
     task_id: int,
     tag_id: int,
     db: Session = Depends(get_db),
-    user: UserModel = Depends(is_authenticated),
+    user_id: int = Depends(is_authenticated),
 ):
-    return controllers.delete_tag_from_task(task_id, tag_id, db, user)
+    return controllers.delete_tag_from_task(task_id, tag_id, db, user_id)
 
 
 # ================== ASSIGN TASK TO USER =============================
@@ -152,23 +150,23 @@ async def assign_task(
     task_id: int,
     body: AssignTaskSchema,
     db: Session = Depends(get_db),
-    user: UserModel = Depends(is_authenticated),
+    user_id: int = Depends(is_authenticated),
 ):
-    return await controllers.assign_task(task_id, body, db, user)
+    return await controllers.assign_task(task_id, body, db, user_id)
 
 
 # ================== GET TASK ASSIGNEES =============================
 @task_routes.get(
     "/{task_id}/assignees",
-    response_model=ResponseSchema[list[UserResponseSchema]],
+    response_model=ResponseSchema[list[dict]],
     status_code=status.HTTP_200_OK,
 )
-def get_task_assignees(
+async def get_task_assignees(
     task_id: int,
     db: Session = Depends(get_db),
-    user: UserModel = Depends(is_authenticated),
+    user_id: int = Depends(is_authenticated),
 ):
-    return controllers.get_task_assignees(task_id, db, user)
+    return controllers.get_task_assignees(task_id, db, user_id)
 
 
 # ================== REMOVE TASK ASSIGNEE =============================
@@ -181,6 +179,6 @@ def remove_task_assignee(
     task_id: int,
     user_id: int,
     db: Session = Depends(get_db),
-    user: UserModel = Depends(is_authenticated),
+    current_user_id: int = Depends(is_authenticated),
 ):
-    return controllers.remove_task_assignee(task_id, user_id, db, user)
+    return controllers.remove_task_assignee(task_id, user_id, db, current_user_id)

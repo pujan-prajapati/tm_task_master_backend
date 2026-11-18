@@ -125,7 +125,7 @@ def test_invalid_credential_login(client):
 def test_inactive_user_login(client, db):
     from sqlalchemy import select
 
-    from task_management_app.src.modules.users.models import UserModel
+    from src.modules.users.models import UserModel
 
     user_data = {
         "name": "Inactive User",
@@ -215,7 +215,7 @@ def test_inactive_user_cannot_access_protected_endpoint(
 
     # Deactivate the user directly in the test database
     from sqlalchemy import select
-    from task_management_app.src.modules.users.models import UserModel
+    from src.modules.users.models import UserModel
 
     user = db.scalar(
         select(UserModel).where(UserModel.username == user_data["username"])
@@ -260,7 +260,7 @@ def test_admin_can_access_admin_users(
     auth_headers,
 ):
     from sqlalchemy import select
-    from task_management_app.src.modules.users.models import UserModel
+    from src.modules.users.models import UserModel
 
     user = db.scalar(select(UserModel).where(UserModel.username == "authuser"))
 
@@ -286,7 +286,7 @@ def test_admin_can_update_user_role(
     second_auth_headers,
 ):
     from sqlalchemy import select
-    from task_management_app.src.modules.users.models import UserModel
+    from src.modules.users.models import UserModel
 
     admin_user = db.scalar(select(UserModel).where(UserModel.username == "authuser"))
 
@@ -317,7 +317,7 @@ def test_admin_can_update_user_status(
     second_auth_headers,
 ):
     from sqlalchemy import select
-    from task_management_app.src.modules.users.models import UserModel
+    from src.modules.users.models import UserModel
 
     admin_user = db.scalar(select(UserModel).where(UserModel.username == "authuser"))
 
@@ -352,7 +352,7 @@ def test_admin_cannot_change_own_status(
     auth_headers,
 ):
     from sqlalchemy import select
-    from task_management_app.src.modules.users.models import UserModel
+    from src.modules.users.models import UserModel
 
     admin_user = db.scalar(select(UserModel).where(UserModel.username == "authuser"))
 

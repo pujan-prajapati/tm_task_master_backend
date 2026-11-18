@@ -4,7 +4,6 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from src.modules.notifications.models import NotificationModel
-from src.modules.users.models import UserModel
 
 from src.utils.helpers import success_response
 
@@ -19,10 +18,10 @@ def create_notification(message: str, user_id: int, db: Session):
 
 
 # ================== GET MY NOTIFICATION ===========================
-def get_my_notification(db: Session, user: UserModel):
+def get_my_notification(db: Session, user_id: int):
     query = (
         select(NotificationModel)
-        .where(NotificationModel.user_id == user.id)
+        .where(NotificationModel.user_id == user_id)
         .order_by(NotificationModel.created_at.desc())
     )
 
@@ -34,7 +33,7 @@ def get_my_notification(db: Session, user: UserModel):
 
 
 # ==================== MARK NOTIFICATION AS READ ======================
-def mark_notification_as_read(notification_id: int, db: Session, user: UserModel):
+def mark_notification_as_read(notification_id: int, db: Session, user_id: int):
     notification = db.get(NotificationModel, notification_id)
 
     if not notification:
@@ -42,7 +41,7 @@ def mark_notification_as_read(notification_id: int, db: Session, user: UserModel
             status_code=status.HTTP_404_NOT_FOUND, detail="Notification Not Found"
         )
 
-    if notification.user_id != user.id:
+    if notification.user_id != user_id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="You are not authorized"
         )
