@@ -23,7 +23,6 @@ from src.modules.tasks.dtos import (
 from src.modules.notifications.controllers import create_notification
 from src.modules.tasks.helpers import check_task_access
 from src.utils.helpers import success_response
-from src.utils.mail import send_email
 
 from src.modules.auth_service import auth_client
 

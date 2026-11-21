@@ -24,7 +24,7 @@ FROM python:3.14-slim AS production
 
 WORKDIR /app
 
-RUN useradd -m appuser && chown -R appuser:appuser /app
+RUN useradd --system -m appuser --shell /usr/sbin/nologin && chown -R appuser:appuser /app
 USER appuser
 
 # Copy app and dependencies from builder stage
@@ -34,9 +34,7 @@ ENV PATH="/app/.venv/bin:$PATH"
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 
-
 EXPOSE 8000
 
 CMD ["uvicorn", "main:app", "--port", "8000", "--host", "0.0.0.0"]
-# CMD ["fastapi", "run", "main.py", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers", "--forwarded-allow-ips", "*"]
 
